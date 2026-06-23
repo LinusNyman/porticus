@@ -45,10 +45,14 @@ func (s Styles) HelpPage(t Theme, groups []HelpGroup, width, height, scroll int)
 }
 
 // helpHeader renders the help heading: the tool title with "help" standing in
-// for the node name, plus any scroll indicator. A single line at every width —
-// the plaque's top border drawn beneath is the rule under it.
+// for the node name, the app version (Theme.Version, dim) when set, plus any
+// scroll indicator. A single line at every width — the plaque's top border drawn
+// beneath is the rule under it.
 func (s Styles) helpHeader(t Theme, hint string, width int) string {
 	title := s.Title.Render(t.Sigil + "  " + SpacedCaps(t.Name) + "  ❧  help")
+	if t.Version != "" {
+		title += "  " + s.Dim.Render(t.Version)
+	}
 	if hint != "" {
 		title += "  " + hint
 	}
@@ -58,11 +62,10 @@ func (s Styles) helpHeader(t Theme, hint string, width int) string {
 // renderHelpGroup formats one section: a spaced-caps heading over "keys action"
 // rows, keys padded to helpKeyW so actions align.
 //
-// Heading colour: the tool accent (s.Title). pensum is the suite's ground-truth
-// help screen, and it renders headings in the accent; the earlier guide §6
-// drift toward colHeading (terracotta) is resolved in pensum's favour here, so
-// every tool's help looks like pensum's (guide §6/§9 updated 2026-06-23). Keep
-// this as s.Title — do not switch to s.Heading.
+// Heading colour: the tool accent (s.Title), the suite's canonical help look.
+// An earlier guide §6 draft put headings in colHeading (terracotta); that drift
+// was resolved to the accent (guide §6/§9 updated 2026-06-23). Keep this as
+// s.Title — do not switch to s.Heading.
 func (s Styles) renderHelpGroup(g HelpGroup) string {
 	lines := []string{s.Title.Render(SpacedCaps(g.Title))}
 	for _, r := range g.Rows {

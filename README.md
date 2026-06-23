@@ -9,7 +9,9 @@ only, no bubbletea, no data spine:
 
 - **Palette & styles** — the fixed base palette and the lipgloss style set
   (`NewStyles(accent)`); the accent colour is the only per-tool input.
-- **Identity** — `Theme{Name, Sigil, Accent}` and the canonical `Tools` table.
+- **Identity** — `Theme{Name, Sigil, Accent, Version}` and the canonical `Tools`
+  table. `Version` is optional (set it at runtime, e.g.
+  `porticus.Tools["album"].WithVersion(version)`) and shows in the help header.
 - **Layout** — `TwoPane` / `Stacked`, pane widths, the `║` divider, `══`/`──`
   pane headers.
 - **Footer** — the `Hints` bar (groups joined by `❧`, hints by `·`, wrapped).

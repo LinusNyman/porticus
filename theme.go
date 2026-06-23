@@ -4,13 +4,23 @@ package porticus
 // suite (suite standard §4). Everything else — palette, layout, key grammar — is
 // shared. Build a tool's styles with NewStyles(theme.Accent).
 type Theme struct {
-	Name   string // tool name, e.g. "pensum"; rendered spaced-caps in titles
-	Sigil  string // identity glyph, e.g. "✎"
-	Accent string // accent hex, e.g. "#e06474"
+	Name    string // tool name, e.g. "pensum"; rendered spaced-caps in titles
+	Sigil   string // identity glyph, e.g. "✎"
+	Accent  string // accent hex, e.g. "#e06474"
+	Version string // optional app version shown in the help header, e.g. "v1.2.3"; "" hides it
 }
 
 // Styles is a convenience for theme.Styles() == NewStyles(theme.Accent).
 func (t Theme) Styles() Styles { return NewStyles(t.Accent) }
+
+// WithVersion returns a copy of the theme with Version set, so a tool can stamp
+// its build version onto its identity in one line, e.g.
+// porticus.Tools["album"].WithVersion(version). The Tools table itself carries no
+// version (it's runtime info).
+func (t Theme) WithVersion(v string) Theme {
+	t.Version = v
+	return t
+}
 
 // Tools is the canonical per-tool identity table (suite standard §4), kept in
 // one place so a tool can pull its identity by name rather than hard-coding the
