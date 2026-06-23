@@ -1,10 +1,9 @@
 // Package calendar is the suite's shared month calendar: a selected day plus the
 // navigation and rendering of the month it falls in. It owns the fiddly parts —
 // the date arithmetic, the Mon–Sun grid layout, the bordered cells, and the
-// selected/today highlight rules — so the suite's calendar tool (calendarium)
-// and any date view (pensum's calendar screen, an album birthday view) share one
-// implementation. The tool keeps the day's detail list (e.g. via browse.Cursor)
-// and supplies a per-day marker.
+// selected/today highlight rules — so the suite's calendar tool and any date
+// view share one implementation. The tool keeps the day's detail list (e.g. via
+// browse.Cursor) and supplies a per-day marker.
 //
 // Spine-free: depends on bubbletea, lipgloss, and the porticus chrome only.
 package calendar

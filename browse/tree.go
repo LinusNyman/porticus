@@ -60,8 +60,8 @@ type Nav struct {
 }
 
 // Update applies a navigation/interaction key. pageStep is the half-screen jump
-// (see PageStep). It mirrors the reference impl: j/k/g/G and half-page move the
-// cursor; expand (l/right/enter) opens a collapsed node or, on a leaf/already-
+// (see PageStep): j/k/g/G and half-page move the cursor; expand (l/right/enter)
+// opens a collapsed node or, on a leaf/already-
 // expanded node, signals CrossRight; collapse (h/left) closes an expanded node
 // or jumps to the parent.
 func (p *TreePane) Update(msg tea.KeyMsg, km keys.Map, pageStep int) Nav {

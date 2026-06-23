@@ -19,7 +19,7 @@ import (
 
 // Map is the suite key grammar. Field bindings carry both their keys and a
 // help string; the help text is curated to read well in the help plaque rather
-// than auto-derived, matching pensum (the reference impl).
+// than auto-derived.
 type Map struct {
 	// Navigation — identical in the tree and every list.
 	Up       key.Binding // k / up   — move selection up

@@ -15,8 +15,7 @@ type Cursor struct {
 	Len   int
 }
 
-// PageStep is the half-screen jump for ctrl+d/ctrl+u, derived from the body
-// height exactly as the reference impl: (height-3)/2, at least 1.
+// PageStep is the half-screen jump for ctrl+d/ctrl+u: (height-3)/2, at least 1.
 func PageStep(height int) int {
 	step := (height - 3) / 2
 	if step < 1 {
@@ -70,7 +69,7 @@ func (c *Cursor) HandleMouse(msg tea.MouseMsg) bool {
 // Reorder moves the selected item by delta (−1 up, +1 down) by asking move to
 // perform the data swap into the new slot, then follows it with the cursor.
 // move(from, to) does the move and reports success. Returns whether the item
-// moved — the shared "J/K reorder" behaviour (pensum todos, decreta principles).
+// moved — the shared "J/K reorder" behaviour.
 func (c *Cursor) Reorder(delta int, move func(from, to int) bool) bool {
 	if delta == 0 {
 		return false
