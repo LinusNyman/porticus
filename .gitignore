@@ -1,0 +1,7 @@
+.DS_Store
+/bin/
+*.test
+*.out
+
+# Personal / local context — never published (see pantheon suite standard §1)
+/CLAUDE.md
