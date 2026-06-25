@@ -10,6 +10,10 @@ type Theme struct {
 	Version string // optional app version shown in the help header, e.g. "v1.2.3"; "" hides it
 }
 
+// Author is the suite's author, shown on the title screen (TitlePage). It is the
+// same across every tool, so it lives here rather than on Theme.
+const Author = "Linus Nyman"
+
 // Styles is a convenience for theme.Styles() == NewStyles(theme.Accent).
 func (t Theme) Styles() Styles { return NewStyles(t.Accent) }
 

@@ -29,17 +29,15 @@ func TestWindowLines(t *testing.T) {
 	}
 }
 
-func TestHelpPageShowsVersion(t *testing.T) {
+// The version is shown on the title screen (TestTitlePageShowsAuthorAndVersion),
+// not in the help header — confirm it has left the header.
+func TestHelpPageOmitsVersion(t *testing.T) {
 	s := NewStyles("#f5a623")
 	groups := []HelpGroup{{Title: "Navigate", Rows: [][2]string{{"j", "down"}}}}
 	album := Theme{Name: "album", Sigil: "❦", Accent: "#f5a623"}
 
-	withV := s.HelpPage(album.WithVersion("v1.2.3"), groups, 80, 12, 0)
-	if !strings.Contains(withV, "v1.2.3") {
-		t.Error("help header should show the theme version")
-	}
-	if strings.Contains(s.HelpPage(album, groups, 80, 12, 0), "v1.2.3") {
-		t.Error("no version set → none shown")
+	if strings.Contains(s.HelpPage(album.WithVersion("v1.2.3"), groups, 80, 12, 0), "v1.2.3") {
+		t.Error("help header should no longer show the version (it lives on the title page)")
 	}
 }
 

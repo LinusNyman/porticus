@@ -45,14 +45,11 @@ func (s Styles) HelpPage(t Theme, groups []HelpGroup, width, height, scroll int)
 }
 
 // helpHeader renders the help heading: the tool title with "help" standing in
-// for the node name, the app version (Theme.Version, dim) when set, plus any
-// scroll indicator. A single line at every width — the plaque's top border drawn
-// beneath is the rule under it.
+// for the node name, plus any scroll indicator. A single line at every width —
+// the plaque's top border drawn beneath is the rule under it. The app version
+// lives on the title screen (TitlePage), not here.
 func (s Styles) helpHeader(t Theme, hint string, width int) string {
 	title := s.Title.Render(t.Sigil + "  " + SpacedCaps(t.Name) + "  ❧  help")
-	if t.Version != "" {
-		title += "  " + s.Dim.Render(t.Version)
-	}
 	if hint != "" {
 		title += "  " + hint
 	}

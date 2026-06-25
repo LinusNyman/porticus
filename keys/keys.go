@@ -52,6 +52,10 @@ type Map struct {
 	Help key.Binding // ?
 	Quit key.Binding // q / ctrl+c
 
+	// Title — the cover / title screen, bound to 0 across every tool, the way
+	// the numbered views are bound to 1…9.
+	Title key.Binding
+
 	// Views — the number keys 1..9 select views, bound contiguously from 1
 	// upward; which number maps to which view is each tool's choice (see View
 	// and HelpGroups).
@@ -87,6 +91,7 @@ func Default() Map {
 		Help: key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit: key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
 
+		Title: key.NewBinding(key.WithKeys("0"), key.WithHelp("0", "title")),
 		Views: key.NewBinding(
 			key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
 			key.WithHelp("1…9", "select view"),
@@ -105,11 +110,11 @@ func (m Map) View(k string) int {
 }
 
 // HelpGroups builds the standard, suite-wide help groups so every tool's help
-// screen opens with the same Navigate and View sections in the same order.
-// viewLabels is the tool's ordered view names (rendered as 1:first 2:second …),
-// enforcing the contiguous-from-1 convention. extra groups (the tool's own
-// actions, worded in its domain) are appended after, then passed to
-// Styles.HelpPage for rendering.
+// screen opens with the same Navigate and View sections in the same order. The
+// View section always leads with the cover screen (0:title) and is followed by
+// the tool's ordered viewLabels (rendered 1:first 2:second …), enforcing the
+// contiguous-from-1 convention. extra groups (the tool's own actions, worded in
+// its domain) are appended after, then passed to Styles.HelpPage for rendering.
 func (m Map) HelpGroups(viewLabels []string, extra ...porticus.HelpGroup) []porticus.HelpGroup {
 	groups := []porticus.HelpGroup{
 		{Title: "Navigate", Rows: [][2]string{
@@ -120,13 +125,13 @@ func (m Map) HelpGroups(viewLabels []string, extra ...porticus.HelpGroup) []port
 			{"enter", "open / jump"},
 		}},
 	}
-	if len(viewLabels) > 0 {
-		rows := make([][2]string, len(viewLabels))
-		for i, lbl := range viewLabels {
-			rows[i] = [2]string{strconv.Itoa(i + 1), lbl}
-		}
-		groups = append(groups, porticus.HelpGroup{Title: "View", Rows: rows})
+	// The cover screen (0) exists in every tool, so the View group is always
+	// present and leads with it; the numbered views follow (1:first 2:second …).
+	rows := [][2]string{{"0", "title"}}
+	for i, lbl := range viewLabels {
+		rows = append(rows, [2]string{strconv.Itoa(i + 1), lbl})
 	}
+	groups = append(groups, porticus.HelpGroup{Title: "View", Rows: rows})
 	groups = append(groups, extra...)
 	return groups
 }

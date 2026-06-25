@@ -42,7 +42,8 @@ func TestHelpGroupsStandardOrder(t *testing.T) {
 func TestHelpGroupsViewKeysContiguousFromOne(t *testing.T) {
 	groups := keys.Default().HelpGroups([]string{"list", "agenda", "calendar"})
 	view := groups[1]
-	want := [][2]string{{"1", "list"}, {"2", "agenda"}, {"3", "calendar"}}
+	// The cover (0:title) always leads, then the numbered views from 1.
+	want := [][2]string{{"0", "title"}, {"1", "list"}, {"2", "agenda"}, {"3", "calendar"}}
 	if len(view.Rows) != len(want) {
 		t.Fatalf("got %d view rows, want %d", len(view.Rows), len(want))
 	}
@@ -55,7 +56,11 @@ func TestHelpGroupsViewKeysContiguousFromOne(t *testing.T) {
 
 func TestHelpGroupsNoViews(t *testing.T) {
 	groups := keys.Default().HelpGroups(nil)
-	if len(groups) != 1 || groups[0].Title != "Navigate" {
-		t.Fatalf("with no view labels, want only the Navigate group, got %d groups", len(groups))
+	// Even with no numbered views, the cover screen gives a View group of one row.
+	if len(groups) != 2 || groups[1].Title != "View" {
+		t.Fatalf("want Navigate + View groups, got %d", len(groups))
+	}
+	if rows := groups[1].Rows; len(rows) != 1 || rows[0] != [2]string{"0", "title"} {
+		t.Fatalf("View group should hold only the 0:title row, got %v", groups[1].Rows)
 	}
 }
