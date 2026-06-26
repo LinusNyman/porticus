@@ -63,6 +63,16 @@ func (l *Line) flash(msg string, k Kind) tea.Cmd {
 	return tea.Tick(timeout, func(time.Time) tea.Msg { return clearMsg{gen: g} })
 }
 
+// Clear empties the line immediately, without waiting for the auto-clear tick —
+// for when a tool needs to dismiss the status itself (e.g. the user starts a new
+// action). Bumping the generation makes any still-pending clear tick stale, so it
+// cannot wipe a message set after this Clear. The kind resets to OK so a cleared
+// line reads as its zero value.
+func (l *Line) Clear() {
+	l.text, l.kind = "", OK
+	l.gen++
+}
+
 // Handle clears the line when msg is the matching (current-generation) clear tick
 // and reports whether it consumed the message. Call it first in the tool's Update
 // so the auto-clear works: if it returns true, return early.
@@ -72,7 +82,7 @@ func (l *Line) Handle(msg tea.Msg) bool {
 		return false
 	}
 	if cm.gen == l.gen {
-		l.text = ""
+		l.text, l.kind = "", OK
 	}
 	return true
 }
@@ -80,7 +90,8 @@ func (l *Line) Handle(msg tea.Msg) bool {
 // Text is the current message ("" when cleared).
 func (l Line) Text() string { return l.text }
 
-// Kind is the colour role of the current message.
+// Kind is the colour role of the current message. It is meaningful only while
+// Text is non-empty; a cleared line reports OK (the zero value).
 func (l Line) Kind() Kind { return l.kind }
 
 // View renders the line in its kind's colour, truncated to width. Empty when

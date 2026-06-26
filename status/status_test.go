@@ -26,6 +26,35 @@ func TestGenerationGuard(t *testing.T) {
 	}
 }
 
+func TestClear(t *testing.T) {
+	var l Line
+	l.SetErr("disk full") // gen 1, kind Error, schedules a clear tick for gen 1
+	l.Clear()             // empties immediately and bumps the generation
+	if l.Text() != "" {
+		t.Errorf("Clear should empty the line, Text = %q", l.Text())
+	}
+	if l.Kind() != OK {
+		t.Errorf("Clear should reset kind to OK, got %v", l.Kind())
+	}
+	// A new message set after Clear must survive the now-stale gen-1 tick.
+	l.Set("next") // gen 3
+	if l.Handle(clearMsg{gen: 1}); l.Text() != "next" {
+		t.Errorf("stale tick wiped a message set after Clear, Text = %q", l.Text())
+	}
+}
+
+func TestAutoClearResetsKind(t *testing.T) {
+	var l Line
+	l.SetErr("disk full")        // gen 1, kind Error
+	l.Handle(clearMsg{gen: 1})   // the matching auto-clear tick
+	if l.Text() != "" {
+		t.Errorf("auto-clear should empty the line, Text = %q", l.Text())
+	}
+	if l.Kind() != OK {
+		t.Errorf("auto-clear should reset kind to OK, got %v", l.Kind())
+	}
+}
+
 func TestHandleIgnoresOtherMessages(t *testing.T) {
 	var l Line
 	l.Set("hi")

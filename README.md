@@ -55,8 +55,9 @@ cover (each opt-in, imported only where needed):
   `FarOff` / `CoarseSpan` render an ISO date as `today` / `tmrw` / `in 3d` /
   `in 2mo`, so dates read identically suite-wide. Pure.
 - **`porticus/status`** — the transient status line: a `Line` you `Set` /
-  `SetInfo` / `SetErr` after a mutation that auto-clears after a few seconds
-  (generation-guarded, so a stale clear never wipes a newer message), rendered by
+  `SetInfo` / `SetErr` after a mutation that auto-clears after a few seconds (or
+  `Clear` to dismiss it yourself), generation-guarded so a stale clear never wipes
+  a newer message, rendered by
   kind in laurel-green / marble-ivory / Pompeian-red. Spine-free, so any tool can
   show one whether or not it uses the tree. (Lifted out of `browse`.)
 - **`porticus/pager`** — scroll state for read-only screens: a `Pager` that owns

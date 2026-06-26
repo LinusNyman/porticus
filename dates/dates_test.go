@@ -33,6 +33,40 @@ func TestRelativeDate(t *testing.T) {
 	}
 }
 
+func TestRelativeDateDST(t *testing.T) {
+	// Stockholm springs forward on the last Sunday of March (2026-03-29 → a 23h
+	// local day) and falls back on the last Sunday of October (2026-10-25 → 25h).
+	// A truncating day-count drifts by one across the short day; rounding holds.
+	loc, err := time.LoadLocation("Europe/Stockholm")
+	if err != nil {
+		t.Skip("no tzdata for Europe/Stockholm")
+	}
+	defer func(orig *time.Location) { time.Local = orig }(time.Local)
+	time.Local = loc
+
+	cases := []struct {
+		nowDay string // "now" is noon on this local day
+		offset int
+		want   string
+	}{
+		{"2026-03-29", 1, "tmrw"},  // spring-forward day was the bug: read "today"
+		{"2026-03-30", -1, "yest"}, // the morning after, looking back over it
+		{"2026-10-25", 1, "tmrw"},  // fall-back (25h) stays correct too
+		{"2026-06-01", 1, "tmrw"},  // control: no transition
+	}
+	for _, c := range cases {
+		now, perr := time.ParseInLocation("2006-01-02", c.nowDay, time.Local)
+		if perr != nil {
+			t.Fatal(perr)
+		}
+		now = now.Add(12 * time.Hour)
+		target := now.AddDate(0, 0, c.offset).Format("2006-01-02")
+		if got := dates.RelativeDate(target, now); got != c.want {
+			t.Errorf("from %s noon, %s = %q, want %q", c.nowDay, target, got, c.want)
+		}
+	}
+}
+
 func TestRelativeDatePassThrough(t *testing.T) {
 	now := time.Now()
 	if got := dates.RelativeDate("", now); got != "" {
