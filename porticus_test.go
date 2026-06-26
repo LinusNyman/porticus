@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestSpacedCaps(t *testing.T) {
@@ -106,5 +107,42 @@ func TestLeftHeaderTwoLines(t *testing.T) {
 	}
 	if !strings.Contains(lines[0], "P E N S U M") || !strings.Contains(lines[0], "inbox") {
 		t.Errorf("title line missing name/node: %q", lines[0])
+	}
+}
+
+func TestNodeCount(t *testing.T) {
+	st := NewStyles("#e06474")
+	strip := func(own, desc int) string { return ansi.Strip(st.NodeCount(own, desc)) }
+	cases := []struct {
+		own, desc int
+		want      string
+	}{
+		{0, 0, ""},     // nothing here or below
+		{4, 0, "(4)"},  // own only
+		{0, 12, "+12"}, // descendants only
+		{4, 12, "(4) +12"},
+	}
+	for _, c := range cases {
+		if got := strip(c.own, c.desc); got != c.want {
+			t.Errorf("NodeCount(%d,%d) = %q, want %q", c.own, c.desc, got, c.want)
+		}
+	}
+}
+
+func TestRightHeaderCount(t *testing.T) {
+	st := NewStyles("#e06474")
+	// total > 0: the label carries "(node) · total".
+	hdr := st.RightHeaderCount("todos", false, 4, 137, 40)
+	title := ansi.Strip(strings.Split(hdr, "\n")[0])
+	if !strings.Contains(title, "T O D O S") {
+		t.Errorf("title missing spaced-caps label: %q", title)
+	}
+	if !strings.Contains(title, "(4)") || !strings.Contains(title, "· 137") {
+		t.Errorf("title missing node/total counts: %q", title)
+	}
+	// total == 0: no count is shown — identical title to a bare RightHeader.
+	bare := ansi.Strip(strings.Split(st.RightHeaderCount("todos", false, 0, 0, 40), "\n")[0])
+	if strings.ContainsAny(bare, "()·") {
+		t.Errorf("empty count should render no badge: %q", bare)
 	}
 }

@@ -1,11 +1,15 @@
 package browse
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/LinusNyman/pantheon/tree"
+	"github.com/LinusNyman/porticus"
 	"github.com/LinusNyman/porticus/keys"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // keyMsg builds a rune key message whose String() is s (e.g. "j", "l"), which
@@ -171,27 +175,44 @@ func TestCursorReorder(t *testing.T) {
 	}
 }
 
+// TestRowBadgeRightAligned guards the node-count fix: a node-count badge must
+// stay visible at the row's right edge even when the name is far too long to
+// fit, so the name is what gets truncated, not the count.
+func TestRowBadgeRightAligned(t *testing.T) {
+	s := porticus.NewStyles("#e06474")
+	long := &tree.Node{Code: "pen", Name: strings.Repeat("verylongname_", 6)}
+	p := New(&tree.Tree{Roots: []*tree.Node{long}}, Opts{
+		Annotate: func(n *tree.Node) string { return s.NodeCount(4, 12) },
+	})
+	const width = 30
+	row := p.renderRow(s, 0, width)
+	if w := lipgloss.Width(row); w != width {
+		t.Errorf("row width = %d, want exactly %d", w, width)
+	}
+	visible := ansi.Strip(row)
+	if !strings.HasSuffix(visible, "(4) +12") {
+		t.Errorf("badge not flush right: row = %q, want it to end with %q", visible, "(4) +12")
+	}
+	if !strings.Contains(visible, "…") {
+		t.Errorf("over-long name should be truncated with an ellipsis: %q", visible)
+	}
+}
+
+// TestRowNoBadge keeps the no-annotation path simple: a bare row is just the
+// truncated line with no trailing gap.
+func TestRowNoBadge(t *testing.T) {
+	s := porticus.NewStyles("#e06474")
+	p := New(fixture(), Opts{})
+	row := ansi.Strip(p.renderRow(s, 0, 30))
+	if strings.TrimRight(row, " ") != row {
+		// Right-aligning only kicks in with a badge; a bare row keeps no pad.
+		t.Errorf("bare row should not be right-padded: %q", row)
+	}
+}
+
 func TestTreePaneMouseWheel(t *testing.T) {
 	p := New(fixture(), Opts{})
 	if !p.HandleMouse(wheel(tea.MouseButtonWheelDown)) || p.Selected().Code != "b" {
 		t.Errorf("wheel down should select b, got %v", p.Selected())
-	}
-}
-
-func TestStatusGenerationGuard(t *testing.T) {
-	var s Status
-	s.Set("first")  // gen 1
-	s.Set("second") // gen 2
-	// A stale clear tick (gen 1) is consumed but must not wipe the newer message.
-	if !s.Handle(clearMsg{gen: 1}) {
-		t.Error("Handle should consume a clearMsg")
-	}
-	if s.Msg != "second" {
-		t.Errorf("stale clear wiped current message, Msg = %q", s.Msg)
-	}
-	// The matching clear (gen 2) wipes it.
-	s.Handle(clearMsg{gen: 2})
-	if s.Msg != "" {
-		t.Errorf("matching clear should wipe message, Msg = %q", s.Msg)
 	}
 }

@@ -52,8 +52,11 @@ type Map struct {
 	Help key.Binding // ?
 	Quit key.Binding // q / ctrl+c
 
-	// Title — the cover / title screen, bound to 0 across every tool, the way
-	// the numbered views are bound to 1…9.
+	// Title — the cover / title screen, bound to + across every tool. + (Shift-+
+	// on a Nordic layout) pairs it with ? help as the suite's two "meta" screens,
+	// set apart from the numbered 1…9 data views: the cover is a splash, not a
+	// view onto the tool's data. It is documented only on the help page (the View
+	// group of HelpGroups); tools must never advertise it in the footer hint bar.
 	Title key.Binding
 
 	// Views — the number keys 1..9 select views, bound contiguously from 1
@@ -91,12 +94,25 @@ func Default() Map {
 		Help: key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit: key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
 
-		Title: key.NewBinding(key.WithKeys("0"), key.WithHelp("0", "title")),
+		Title: key.NewBinding(key.WithKeys("+"), key.WithHelp("+", "title")),
 		Views: key.NewBinding(
 			key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
 			key.WithHelp("1…9", "select view"),
 		),
 	}
+}
+
+// PageStep is the half-screen jump for the HalfUp/HalfDown bindings (ctrl+u /
+// ctrl+d): (height-3)/2, at least 1. Pass it to browse.Cursor.Handle or
+// pager.Pager.Handle so half-page paging behaves identically wherever the suite
+// scrolls. It is package-level (not a Map method) — the step is the same grammar
+// for every tool, independent of any rebound keys.
+func PageStep(height int) int {
+	step := (height - 3) / 2
+	if step < 1 {
+		step = 1
+	}
+	return step
 }
 
 // View returns the 1-based view index a digit key selects (1 for "1" … 9 for
@@ -111,7 +127,7 @@ func (m Map) View(k string) int {
 
 // HelpGroups builds the standard, suite-wide help groups so every tool's help
 // screen opens with the same Navigate and View sections in the same order. The
-// View section always leads with the cover screen (0:title) and is followed by
+// View section always leads with the cover screen (+:title) and is followed by
 // the tool's ordered viewLabels (rendered 1:first 2:second …), enforcing the
 // contiguous-from-1 convention. extra groups (the tool's own actions, worded in
 // its domain) are appended after, then passed to Styles.HelpPage for rendering.
@@ -125,9 +141,9 @@ func (m Map) HelpGroups(viewLabels []string, extra ...porticus.HelpGroup) []port
 			{"enter", "open / jump"},
 		}},
 	}
-	// The cover screen (0) exists in every tool, so the View group is always
+	// The cover screen (+) exists in every tool, so the View group is always
 	// present and leads with it; the numbered views follow (1:first 2:second …).
-	rows := [][2]string{{"0", "title"}}
+	rows := [][2]string{{"+", "title"}}
 	for i, lbl := range viewLabels {
 		rows = append(rows, [2]string{strconv.Itoa(i + 1), lbl})
 	}

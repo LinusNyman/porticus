@@ -16,16 +16,13 @@ type Cursor struct {
 }
 
 // PageStep is the half-screen jump for ctrl+d/ctrl+u: (height-3)/2, at least 1.
-func PageStep(height int) int {
-	step := (height - 3) / 2
-	if step < 1 {
-		step = 1
-	}
-	return step
-}
+// It delegates to keys.PageStep (the suite-wide canonical step) so the tree, the
+// working lists, and pager.Pager all page by the same amount; kept here too as
+// the convenience browse's consumers already call.
+func PageStep(height int) int { return keys.PageStep(height) }
 
 // Handle applies a navigation key to the cursor and reports whether it moved.
-// pageStep is the half-screen jump (see PageStep). Keys it doesn't recognise
+// pageStep is the half-screen jump (see keys.PageStep). Keys it doesn't recognise
 // leave the cursor unchanged and return false, so the caller can handle them.
 func (c *Cursor) Handle(msg tea.KeyMsg, km keys.Map, pageStep int) bool {
 	prev := c.Index

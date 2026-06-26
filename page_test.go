@@ -29,6 +29,24 @@ func TestWindowLines(t *testing.T) {
 	}
 }
 
+func TestPageRows(t *testing.T) {
+	// Fits exactly (total == height-2): all rows shown, no hint row reserved.
+	if got := PageRows(12, 10); got != 10 {
+		t.Errorf("PageRows(12,10) = %d, want 10 (fits, no hint)", got)
+	}
+	// One row over the fit: a hint row is reserved, so the budget drops to height-3.
+	if got := PageRows(12, 11); got != 9 {
+		t.Errorf("PageRows(12,11) = %d, want 9 (overflow reserves a hint row)", got)
+	}
+	// Tiny page: never below 1, and no hint row stolen when only 1 row is left.
+	if got := PageRows(3, 100); got != 1 {
+		t.Errorf("PageRows(3,100) = %d, want 1", got)
+	}
+	if got := PageRows(1, 100); got != 1 {
+		t.Errorf("PageRows(1,100) = %d, want 1 (clamped)", got)
+	}
+}
+
 // The version is shown on the title screen (TestTitlePageShowsAuthorAndVersion),
 // not in the help header — confirm it has left the header.
 func TestHelpPageOmitsVersion(t *testing.T) {

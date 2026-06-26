@@ -20,6 +20,9 @@ import (
 
 var weekdayHeads = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 
+// weekColW is the width of the left-hand ISO-week-number gutter (e.g. " 23 ").
+const weekColW = 4
+
 // Grid is a month calendar centred on a selected day.
 type Grid struct {
 	sel time.Time
@@ -70,13 +73,14 @@ func (g *Grid) Move(msg tea.KeyMsg) bool {
 	return !g.sel.Equal(prev)
 }
 
-// View renders the month grid: the "January 2006" title, the Mon–Sun weekday
-// header, then the bordered day cells (7 per week row, only the weeks the month
-// spans). cells are width/7 wide. marker returns a short plain badge for a day
-// (e.g. a count "3●"), or "" for none, and may be nil; the badge is styled in the
-// suite count colour and right-aligned in the cell. The selected day wears the
-// accent border, today the aegean-blue border — and the selection wins when they
-// coincide.
+// View renders the month grid: the "January 2006" title, a "wk" gutter heading
+// above the Mon–Sun weekday header, then each week as its ISO week number in the
+// left gutter followed by the bordered day cells (7 per week row, only the weeks
+// the month spans). Day cells are (width-weekColW)/7 wide. marker returns a short
+// plain badge for a day (e.g. a count "3●"), or "" for none, and may be nil; the
+// badge is styled in the suite count colour and right-aligned in the cell. The
+// selected day wears the accent border, today the aegean-blue border — and the
+// selection wins when they coincide.
 func (g Grid) View(s porticus.Styles, width int, marker func(day time.Time) string) string {
 	now := time.Now()
 	sel := g.sel
@@ -92,7 +96,7 @@ func (g Grid) View(s porticus.Styles, width int, marker func(day time.Time) stri
 	gridStart := first.AddDate(0, 0, -offset)
 	numWeeks := (offset + DaysInMonth(sel.Year(), curMonth) + 6) / 7
 
-	cw := width / 7
+	cw := (width - weekColW) / 7
 	if cw < 6 {
 		cw = 6
 	}
@@ -105,25 +109,37 @@ func (g Grid) View(s porticus.Styles, width int, marker func(day time.Time) stri
 	for i, wd := range weekdayHeads {
 		heads[i] = s.Dim.Render(porticus.Center(wd, cw))
 	}
+	weekHead := s.Dim.Render(porticus.Center("wk", weekColW))
 
 	weekRows := make([]string, 0, numWeeks)
 	d := gridStart
 	for w := 0; w < numWeeks; w++ {
-		cells := make([]string, 7)
+		cells := make([]string, 8)
+		cells[0] = weekNumCell(s, d)
 		for c := 0; c < 7; c++ {
 			mk := ""
 			if marker != nil {
 				mk = marker(d)
 			}
-			cells[c] = cell(s, d, inner, curMonth, todayStr, selStr, mk)
+			cells[c+1] = cell(s, d, inner, curMonth, todayStr, selStr, mk)
 			d = d.AddDate(0, 0, 1)
 		}
 		weekRows = append(weekRows, lipgloss.JoinHorizontal(lipgloss.Top, cells...))
 	}
 
-	lines := []string{s.Title.Render(sel.Format("January 2006")), strings.Join(heads, "")}
+	lines := []string{s.Title.Render(sel.Format("January 2006")), weekHead + strings.Join(heads, "")}
 	lines = append(lines, weekRows...)
 	return strings.Join(lines, "\n")
+}
+
+// weekNumCell renders the ISO week number for the row whose Monday is d, as a
+// dim gutter block aligned (height 3) to the middle row of the bordered day
+// cells beside it.
+func weekNumCell(s porticus.Styles, monday time.Time) string {
+	_, wk := monday.ISOWeek()
+	return lipgloss.NewStyle().Width(weekColW).Height(3).
+		Align(lipgloss.Center, lipgloss.Center).
+		Render(s.Dim.Render(fmt.Sprintf("%d", wk)))
 }
 
 // cell renders one day as a bordered box: day number left, marker badge right.

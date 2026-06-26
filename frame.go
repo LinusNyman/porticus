@@ -91,13 +91,32 @@ func (s Styles) LeftHeader(t Theme, nodeName string, width int) string {
 // stone (no sigil) over a single ── rule. When the pane is focused the rule is
 // drawn in the accent colour (suite standard §6).
 func (s Styles) RightHeader(label string, focused bool, width int) string {
+	return s.Dim.Render(SpacedCaps(label)) + "\n" + s.rightRule(focused, width)
+}
+
+// RightHeaderCount is RightHeader with an item-count suffix after the label: the
+// count at the selected node in parens (verdigris) and the whole-forest total
+// after a middle dot (dim), e.g. "T O D O S  (4) · 137". The counts show only
+// when total > 0; both numbers come from the tool, which knows what an "item"
+// is. (The right title carrying a count is a deliberate exception to the guide's
+// "right title: single label" rule — see §3.2 / the §9 decision log.)
+func (s Styles) RightHeaderCount(label string, focused bool, node, total, width int) string {
 	title := s.Dim.Render(SpacedCaps(label))
+	if total > 0 {
+		title += "  " + s.Count.Render(fmt.Sprintf("(%d)", node)) +
+			s.Dim.Render(fmt.Sprintf(" · %d", total))
+	}
+	return Truncate(title, width) + "\n" + s.rightRule(focused, width)
+}
+
+// rightRule renders the right pane's single ── underline: weathered stone when
+// blurred, the accent colour when the pane is focused (suite standard §6).
+func (s Styles) rightRule(focused bool, width int) string {
 	ruleStyle := s.Dim
 	if focused {
 		ruleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(s.Accent))
 	}
-	rule := ruleStyle.Render(strings.Repeat("─", width))
-	return title + "\n" + rule
+	return ruleStyle.Render(strings.Repeat("─", width))
 }
 
 // ScrollHint renders a dim one-line indicator of how many rows are hidden above
@@ -114,6 +133,26 @@ func (s Styles) ScrollHint(above, below, width int) string {
 		parts = append(parts, fmt.Sprintf("↓%d", below))
 	}
 	return Truncate(s.Dim.Render("  "+strings.Join(parts, "  ")), width)
+}
+
+// NodeCount renders the canonical tree-row count badge: the node's own item
+// count in parens (verdigris) then its descendants' total after a plus (dim),
+// e.g. "(4) +12". Either part is dropped when zero; both zero yields "". This is
+// the shared form every tool's browse.Opts.Annotate should return — browse
+// right-aligns it and inserts the gap before it, so return no leading padding
+// (suite standard §6, guide §3.3).
+func (s Styles) NodeCount(own, desc int) string {
+	if own == 0 && desc == 0 {
+		return ""
+	}
+	var parts []string
+	if own > 0 {
+		parts = append(parts, s.Count.Render(fmt.Sprintf("(%d)", own)))
+	}
+	if desc > 0 {
+		parts = append(parts, s.Dim.Render(fmt.Sprintf("+%d", desc)))
+	}
+	return strings.Join(parts, " ")
 }
 
 // Checkbox is the list status glyph shared by every tool: a dim empty ☐, or a

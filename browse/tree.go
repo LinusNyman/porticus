@@ -1,3 +1,14 @@
+// Package browse is the pantheon suite's shared two-pane tree-browser scaffold:
+// the stateful left-pane node tree (TreePane) and the list selection cursor
+// (Cursor). Each is embedded by a tool's own bubbletea Model — porticus owns the
+// navigation grammar, geometry, and rendering so the tree/working screen behaves
+// identically across tools, while the tool keeps its own data and working-pane
+// content. (The transient status line lives in porticus/status, spine-free.)
+//
+// browse depends on the data spine (github.com/LinusNyman/pantheon/tree) for
+// the node type and on bubbletea for messages/commands. Per the suite rule,
+// this spine-coupled, interactive layer lives in its own package, separate from
+// the dependency-light porticus chrome.
 package browse
 
 import (
@@ -9,6 +20,7 @@ import (
 	"github.com/LinusNyman/porticus/keys"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Row is one visible tree line: a node at an indentation depth.
@@ -21,8 +33,11 @@ type Row struct {
 // any tool type.
 type Opts struct {
 	// Annotate returns the trailing badge for a node row — e.g. a count like
-	// "(4) +12" or an overdue mark — already styled and including its own
-	// leading spacing. May be nil for a bare tree.
+	// "(4) +12" (see porticus.Styles.NodeCount) or an overdue mark, already
+	// styled. The badge is right-aligned at the pane's right edge: a long node
+	// name is truncated before the badge is, so the count is always visible.
+	// porticus inserts the gap before it, so return the badge content alone with
+	// no leading padding. May be nil for a bare tree.
 	Annotate func(n *tree.Node) string
 	// HasItems reports whether a node survives the "only nodes with items"
 	// filter (true when the node or any descendant has items). Consulted only
@@ -274,14 +289,26 @@ func (p TreePane) renderRow(s porticus.Styles, i, width int) string {
 			arrow = "▸"
 		}
 	}
+	left := fmt.Sprintf("%s%s %s  %s",
+		indent, arrow,
+		s.Code.Render(r.Node.Code),
+		s.Name.Render(r.Node.Display()))
+
 	badge := ""
 	if p.opts.Annotate != nil {
 		badge = p.opts.Annotate(r.Node)
 	}
-	line := fmt.Sprintf("%s%s %s  %s%s",
-		indent, arrow,
-		s.Code.Render(r.Node.Code),
-		s.Name.Render(r.Node.Display()),
-		badge)
-	return porticus.Truncate(line, width)
+	if badge == "" {
+		return porticus.Truncate(left, width)
+	}
+	// Right-align the badge: the count is the salient datum, so reserve it at
+	// the pane's right edge and truncate the (variable-length) name rather than
+	// let a long name push the badge off the line (the bug this fixed). Keep a
+	// one-cell gap before it.
+	avail := width - lipgloss.Width(badge) - 1
+	if avail < 1 {
+		// Too narrow to show both; the badge wins.
+		return porticus.Truncate(badge, width)
+	}
+	return porticus.PadTo(porticus.Truncate(left, avail), avail) + " " + badge
 }

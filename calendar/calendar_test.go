@@ -1,6 +1,7 @@
 package calendar_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -76,5 +77,29 @@ func TestViewLayout(t *testing.T) {
 	}
 	if !strings.Contains(out, "2●") {
 		t.Error("per-day marker not rendered")
+	}
+}
+
+func TestViewWeekNumbers(t *testing.T) {
+	sel := time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC)
+	g := calendar.New(sel)
+	s := porticus.NewStyles("#e06474")
+	out := g.View(s, 70, nil)
+
+	if !strings.Contains(out, "wk") {
+		t.Errorf("week-number gutter heading missing:\n%s", out)
+	}
+
+	// Every week the grid spans must show its ISO week number. Recompute the
+	// grid's Monday-aligned rows the way View does and assert each appears.
+	first := time.Date(sel.Year(), sel.Month(), 1, 0, 0, 0, 0, sel.Location())
+	offset := (int(first.Weekday()) + 6) % 7
+	gridStart := first.AddDate(0, 0, -offset)
+	numWeeks := (offset + calendar.DaysInMonth(sel.Year(), sel.Month()) + 6) / 7
+	for w := 0; w < numWeeks; w++ {
+		_, wk := gridStart.AddDate(0, 0, w*7).ISOWeek()
+		if !strings.Contains(out, fmt.Sprintf("%d", wk)) {
+			t.Errorf("ISO week %d missing from grid:\n%s", wk, out)
+		}
 	}
 }

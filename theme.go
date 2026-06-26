@@ -7,7 +7,8 @@ type Theme struct {
 	Name    string // tool name, e.g. "pensum"; rendered spaced-caps in titles
 	Sigil   string // identity glyph, e.g. "✎"
 	Accent  string // accent hex, e.g. "#e06474"
-	Version string // optional app version shown in the help header, e.g. "v1.2.3"; "" hides it
+	Version string // optional app version shown on the title screen, e.g. "v1.2.3"; "" hides it
+	Tagline string // optional one-sentence description shown on the title screen; "" hides it
 }
 
 // Author is the suite's author, shown on the title screen (TitlePage). It is the
@@ -26,6 +27,15 @@ func (t Theme) WithVersion(v string) Theme {
 	return t
 }
 
+// WithTagline returns a copy of the theme with Tagline set — a tool's one-sentence
+// description for the title screen, e.g. porticus.Tools["pensum"].WithTagline(
+// "the work you set yourself, kept in order"). The Tools table leaves it empty;
+// each tool supplies its own copy, the same way it supplies its build Version.
+func (t Theme) WithTagline(s string) Theme {
+	t.Tagline = s
+	return t
+}
+
 // Tools is the canonical per-tool identity table (suite standard §4), kept in
 // one place so a tool can pull its identity by name rather than hard-coding the
 // hex and glyph. A tool may also construct its own Theme literal.
@@ -38,5 +48,5 @@ var Tools = map[string]Theme{
 	"studium":     {Name: "studium", Sigil: "⊙", Accent: "#a78bfa"},
 	"atrium":      {Name: "atrium", Sigil: "◈", Accent: "#ee7f44"},
 	"album":       {Name: "album", Sigil: "❦", Accent: "#f5a623"},
-	"calendarium": {Name: "calendarium", Sigil: "⊕", Accent: "#5b7dc8"},
+	"fasti": {Name: "fasti", Sigil: "⊕", Accent: "#5b7dc8"},
 }

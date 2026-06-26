@@ -9,13 +9,17 @@ only, no bubbletea, no data spine:
 
 - **Palette & styles** — the fixed base palette and the lipgloss style set
   (`NewStyles(accent)`); the accent colour is the only per-tool input.
-- **Identity** — `Theme{Name, Sigil, Accent, Version}` and the canonical `Tools`
-  table. `Version` is optional (set it at runtime, e.g.
-  `porticus.Tools["album"].WithVersion(version)`) and shows in the help header.
+- **Identity** — `Theme{Name, Sigil, Accent, Version, Tagline}` and the canonical
+  `Tools` table. `Version` (`WithVersion`) and `Tagline` (`WithTagline`, a
+  one-sentence description) are optional per-tool copy, left empty in `Tools` and
+  set per tool, e.g. `porticus.Tools["album"].WithVersion(version)`; both show on
+  the title screen (`TitlePage`, bound to `+`), not the help header.
 - **Layout** — `TwoPane` / `Stacked`, pane widths, the `║` divider, `══`/`──`
   pane headers.
 - **Footer** — the `Hints` bar (groups joined by `❧`, hints by `·`, wrapped).
 - **Help** — the carved-stone `HelpPage` plaque.
+- **Title screen** — the full-bleed `TitlePage` cover (sigil, big-block name via
+  `BigText`, tagline, `❧`/`══` ornament, version, author), bound to `+`.
 - **Text helpers** — `SpacedCaps`, `PadTo`, `Truncate`, `WrapRows`, `ScrollHint`.
 
 **Sub-packages** add the shared interactive layer that the chrome alone can't
@@ -27,9 +31,9 @@ cover (each opt-in, imported only where needed):
   the help screen can't drift from the bindings. Depends on bubbletea, not the
   spine.
 - **`porticus/browse`** — the stateful two-pane tree-browser scaffold a tool
-  embeds: `TreePane` (the left-pane node tree), `Cursor` (list selection +
-  windowing), and `Status` (the auto-clearing status line). Depends on the data
-  spine (`pantheon/tree`) for the node type, kept here in its own package.
+  embeds: `TreePane` (the left-pane node tree) and `Cursor` (list selection +
+  windowing). Depends on the data spine (`pantheon/tree`) for the node type, kept
+  here in its own package.
 - **`porticus/insights`** — shared charts (`Sparkline`, `Heatmap`,
   `CalendarHeatmap`, `Compute`/`Trend`) and a scrollable `InsightsPage`, for the
   graph/stats screens (album demographics, speculum habit stats). Pure render.
@@ -45,17 +49,26 @@ cover (each opt-in, imported only where needed):
   on. Spine-free.
 - **`porticus/calendar`** — the month calendar: a `Grid` (selected day +
   day/week/month navigation + per-day marker callback + selected/today
-  highlight), the shared base for calendarium and any date view. The day-detail
+  highlight), the shared base for fasti and any date view. The day-detail
   list is the tool's (via `browse.Cursor`). Spine-free.
 - **`porticus/dates`** — the relative-date vocabulary: `RelativeDate` /
   `FarOff` / `CoarseSpan` render an ISO date as `today` / `tmrw` / `in 3d` /
   `in 2mo`, so dates read identically suite-wide. Pure.
+- **`porticus/status`** — the transient status line: a `Line` you `Set` /
+  `SetInfo` / `SetErr` after a mutation that auto-clears after a few seconds
+  (generation-guarded, so a stale clear never wipes a newer message), rendered by
+  kind in laurel-green / marble-ivory / Pompeian-red. Spine-free, so any tool can
+  show one whether or not it uses the tree. (Lifted out of `browse`.)
+- **`porticus/pager`** — scroll state for read-only screens: a `Pager` that owns
+  the offset over a block of text and renders it through `Styles.Page`, handling
+  the suite nav keys and the wheel — the line-scroll analogue of `browse.Cursor`.
+  Spine-free.
 
 The root also has **`Styles.Page`** — the shared scrollable read-only page chrome
 (header + windowed body + scroll hint), behind `HelpPage`/`InsightsPage` and
-reusable as a `Pager` for custom screens (a markdown preview, a stats page) — and
-the `browse`/`pick` cursors take wheel scrolling (`HandleMouse`) and reordering
-(`Cursor.Reorder`).
+wrapped with scroll state by `porticus/pager`; **`PageRows`** exposes its body-row
+budget so a pager clamps to exactly what `Page` renders. The `browse`/`pick`
+cursors take wheel scrolling (`HandleMouse`) and reordering (`Cursor.Reorder`).
 
 ## Layering
 
@@ -64,6 +77,8 @@ the `browse`/`pick` cursors take wheel scrolling (`HandleMouse`) and reordering
                        │
    pantheon ───────────┤   porticus (root: chrome, presentation only)
    (data spine)        │       ├── keys      (no spine)
+        │              │       ├── status    (no spine)
+        │              │       ├── pager     (no spine)
         │              │       ├── insights  (no spine)
         │              │       ├── pick      (no spine)
         │              │       ├── input     (no spine)
